@@ -1,4 +1,5 @@
 from urllib.parse import urlparse, parse_qsl
+import re
 
 
 def parse(query: str) -> dict:
@@ -32,7 +33,10 @@ if __name__ == '__main__':
 
 
 def parse_cookie(query: str) -> dict:
-    return {}
+    # Take a string with key=value and return dict
+    pattern = r'(\w+)=([\w|=]+)?'
+    matches = re.finditer(pattern, query)
+    return dict((match.group(1), match.group(2)) for match in matches)
 
 
 if __name__ == '__main__':
@@ -40,3 +44,17 @@ if __name__ == '__main__':
     assert parse_cookie('') == {}
     assert parse_cookie('name=Dima;age=28;') == {'name': 'Dima', 'age': '28'}
     assert parse_cookie('name=Dima=User;age=28;') == {'name': 'Dima=User', 'age': '28'}
+
+    # My tests for parse_cookie function
+    assert parse_cookie('name=Dima') == {'name': 'Dima'}
+    assert parse_cookie('name=Dima/&') == {'name': 'Dima'}
+    assert parse_cookie('name=Dima/gov/age=28') == {'name': 'Dima', 'age': '28'}
+    assert parse_cookie('name=Dima/gov/:""">age=28:";') == {'name': 'Dima', 'age': '28'}
+    assert parse_cookie('name=Dima_Zarubin') == {'name': 'Dima_Zarubin'}
+    assert parse_cookie('name=Dima_Zarubin#age=60#') == {'name': 'Dima_Zarubin', 'age': '60'}
+    assert parse_cookie('sign-up?for=membership') == {'for': 'membership'}
+    assert parse_cookie('something=in=the=way') == {'something': 'in=the=way'}
+    assert parse_cookie('/password=q1W2e3R4tY/') == {'password': 'q1W2e3R4tY'}
+    assert parse_cookie('pretty_fly=for_a_white_guy/?name=Декстер_Холланд#age=56#') == {'pretty_fly': 'for_a_white_guy',
+                                                                                        'name': 'Декстер_Холланд',
+                                                                                        'age': '56'}
